@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <shader.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
