@@ -1,1 +1,0 @@
-/usr/bin/cc CMakeFiles/OpenGL.dir/src/main.c.o -o OpenGL  _deps/glad-build/libglad.a _deps/glfw-build/src/libglfw3.a -lassimp /usr/lib/librt.a -lm -ldl 
