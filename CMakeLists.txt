@@ -17,7 +17,6 @@ FetchContent_MakeAvailable(glad)
 #endif()
 
 find_package(glfw3 3.3 REQUIRED)
-message(STATUS "GLFW was found")
 if(!${glfw3_found})
 	message(STATUS "GLFW was not found, downloading from source (Recommended to install glfw)")
 	FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG master)
