@@ -45,7 +45,7 @@ int main(void){
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	unsigned int shader = CreateShader("../assets/shaders/vert.glsl", "../assets/shaders/vert.glsl");
+	unsigned int shader = CreateShader("./assets/shaders/vert.glsl", "./assets/shaders/vert.glsl");
 	glUseProgram(shader);
 
 	//Renderer tests
