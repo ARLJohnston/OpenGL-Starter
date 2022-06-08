@@ -45,8 +45,16 @@ int main(void){
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	unsigned int shader = CreateShader("../assets/shaders/vert.glsl", "../assets/shaders/vert.glsl");
+	glUseProgram(shader);
 
-	printf("All imports working");
+	//Renderer tests
+	//initRenderData();
+	//vec2 size = {1.0f, 1.0f};
+	//vec2 position = {0.0f, 0.0f};
+	//vec4 colour = {1.0f, 0.0f, 0.0f, 1.0f};
+	//float textureID = 0.0f;
+	//float x = createQuad(size, position, colour, textureID);
 
 	while(!glfwWindowShouldClose(window))
 	{

@@ -1,14 +1,22 @@
 cmake_minimum_required(VERSION 3.6)
 project(OpenGL C)
+set(CMAKE_BUILD_TYPE Debug)
+
+#Top-level flags to show all errors
+#if(MVSC)
+#	add_compile_options(/W3 /WX)
+#else()
+#	add_compile_options(-W -Wall -Werror)
+#endif()
 
 #Libraries
 find_package(OpenGL REQUIRED)
 
+add_subdirectory(glad/)
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-add_subdirectory(glad/)
 
 find_package(glfw3 3.3 REQUIRED)
 if(!${glfw3_found})
@@ -18,12 +26,20 @@ if(!${glfw3_found})
 endif()
 
 #Executable
-add_executable(${PROJECT_NAME} "src/main.c")
-target_include_directories(${PROJECT_NAME} PUBLIC "include")
-target_include_directories(${PROJECT_NAME} PUBLIC "src")
+set(SOURCES 
+	src/main.c
+	src/shader.c
+	src/texture.c
+	src/vector.c
+	include/stb_image.h
+)
+
+add_executable(${PROJECT_NAME} ${SOURCES})
+target_include_directories(${PROJECT_NAME} PUBLIC "src" "include")
 target_link_libraries(${PROJECT_NAME} 
 	glad
 	glfw
 	m
 	)
+
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)

@@ -6,13 +6,13 @@
 
 static char* readFile(const char* path)
 {
-	
 	char *buffer = 0;
 	
 	FILE *f = fopen(path, "r");
 	
 	if(f)
 	{
+		printf("Found");
 		fseek(f, 0, SEEK_END); //Make offset length of file
 		long length = ftell(f); //Get current offset (length of file)
 		fseek(f, 0, SEEK_SET);  //Offset = beginning of set
