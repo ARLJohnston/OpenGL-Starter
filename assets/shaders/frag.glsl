@@ -1,15 +1,15 @@
 #version 460 core
 
 layout (location = 0) out vec4 colour;
-in vec4 vertexColour;
-in vec2 texCoord;
-in float texIndex;
 
-unform sampler2D texSampler[32];
+in vec2 v_TexCoord;
+
+uniform vec4 u_Colour;
+uniform sampler2D u_Texture;
 
 void main()
 {
-	int index = int(texIndex);
-	colour = texture(texSampler[index], texCoord) * vertexColour;
+	vec4 texColour = texture(u_Texture, v_TexCoord);
+	colour = texColour;
 }
 
