@@ -34,4 +34,5 @@ GLuint LoadTexture(const char* path)
 		printf("%s\n", stbi_failure_reason());
 	}
 	
+	return texture;
 }

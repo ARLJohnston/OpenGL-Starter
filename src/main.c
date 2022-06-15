@@ -47,14 +47,14 @@ int main(void){
 
 	/* Test Area */
 
-	unsigned int shader = CreateShader("./assets/shaders/vert.glsl", "./assets/shaders/vert.glsl");
+	unsigned int shader = CreateShader("./assets/shaders/vert.glsl", "./assets/shaders/frag.glsl");
 	glUseProgram(shader);
-
+	
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f,
-		 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-		 0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f,
-		-0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+		-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,     0.0f, 0.0f,
+		0.5f, -0.5f, 0.0f,	1.0f, 0.0f, 0.0f,	    1.0f, 0.0f,
+		0.5f, 0.5f, 0.0f, 	1.0f, 0.0f, 0.0f,	    1.0f, 1.0f,
+		-0.5f, 0.5f, 0.0f,	1.0f, 0.0f, 0.0f,	    0.0f, 1.0f
 	};
 
 	unsigned int indices[] = {
@@ -65,20 +65,28 @@ int main(void){
 	unsigned int va;
 	glCreateVertexArrays(1, &va);
 	glBindVertexArray(va);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1,2, GL_FLOAT,GL_FALSE, 4 * sizeof(float), (void*)(4 * sizeof(float)));
-	glEnableVertexAttribArray(1);
 
 	unsigned int vb;
 	glGenBuffers(1, &vb);
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
-	glBufferData(GL_ARRAY_BUFFER, 4 * 4 * sizeof(float), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 8* sizeof(float), 0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1,3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2,2, GL_FLOAT,GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	unsigned int ib;
 	glGenBuffers(1, &ib);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6* sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+	unsigned int texture = LoadTexture("./assets/textures/tex.png");
+	
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
 	/*End test area */
 
@@ -86,7 +94,10 @@ int main(void){
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 
+
+		glUseProgram(shader);
 		glBindVertexArray(va);
+		glBindTexture(GL_TEXTURE_2D, texture);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		processInput(window);
