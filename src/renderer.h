@@ -2,16 +2,12 @@
 #define RENDERER
 
 #include <vector.h>
-#include <glad/glad.h>
+#include <shader.h>
+#include <texture.h>
+#include <GLFW/glfw3.h>
 
-struct vertex {
-	vec3 position;
-	vec4 colour;
-	vec2 texCoords;
-	float texIndex;
-};
+void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath);
+void data();
+void draw();
 
-void initRenderData();
-
-float createQuad(vec2 size, vec2 position, vec4 colour, float textureID);
 #endif

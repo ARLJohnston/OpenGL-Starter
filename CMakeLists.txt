@@ -31,6 +31,7 @@ set(SOURCES
 	src/shader.c
 	src/texture.c
 	src/vector.c
+	src/renderer.c
 	include/stb_image.h
 )
 
