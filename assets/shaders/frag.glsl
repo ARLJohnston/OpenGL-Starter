@@ -2,13 +2,15 @@
 
 out vec4 colour;
 
-in vec3 v_Colour;
+in vec4 v_Colour;
 in vec2 v_TexCoord;
+in float v_TexIndex;
 
-uniform sampler2D u_Texture;
+uniform sampler2D u_Texture[32];
 
 void main()
 {
-	colour = texture(u_Texture, v_TexCoord);
+	int index = int(v_TexIndex);
+	colour = texture(u_Texture[index], v_TexCoord);
 }
 

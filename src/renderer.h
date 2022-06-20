@@ -9,5 +9,6 @@
 void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath);
 void data();
 void draw();
+void terminate(); 
 
 #endif
