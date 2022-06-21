@@ -1,11 +1,13 @@
 #include <renderer.h>
 
-struct vertex {
+#define MAX_VERTICES 128
+
+typedef struct {
 	vec3 position;
 	vec4 colour;
 	vec2 textureCoords;
-	unsigned int textureIndex;
-};
+	float textureIndex;
+} vertex;
 
 unsigned int indices[] = {
 	0, 1, 2,
@@ -22,8 +24,60 @@ struct {
 	unsigned int shader;
 } rendererData;
 
+struct {
+	float vertices[200];
+	unsigned int count;
+} data;
+
 unsigned int texture;
 unsigned int texture2;
+
+void createQuad(float x, float y, float textureIndex){
+
+	float size = 1.0f;
+
+	vertex* objectPtr = (void*) &data.vertices + (data.count * 4 * sizeof(vertex));
+
+	vec4 colour = {1.0f, 0.0f, 0.0f, 1.0f};
+
+	objectPtr->position.x = x;
+	objectPtr->position.y = y;
+	objectPtr->position.z = 0.0f;
+	objectPtr->colour = colour;
+	objectPtr->textureCoords.x = 0.0f;
+	objectPtr->textureCoords.y = 0.0f;
+	objectPtr->textureIndex = textureIndex;
+	objectPtr++;
+
+	objectPtr->position.x = x + size;
+	objectPtr->position.y = y;
+	objectPtr->position.z = 0.0f;
+	objectPtr->colour = colour;
+	objectPtr->textureCoords.x = 1.0f;
+	objectPtr->textureCoords.y = 0.0f;
+	objectPtr->textureIndex = textureIndex;
+	objectPtr++;
+
+	objectPtr->position.x = x + size;
+	objectPtr->position.y = y + size;
+	objectPtr->position.z = 0.0f;
+	objectPtr->colour = colour;
+	objectPtr->textureCoords.x = 1.0f;
+	objectPtr->textureCoords.y = 1.0f;
+	objectPtr->textureIndex = textureIndex;
+	objectPtr++;
+
+	objectPtr->position.x = x;
+	objectPtr->position.y = y + size;
+	objectPtr->position.z = 0.0f;
+	objectPtr->colour = colour;
+	objectPtr->textureCoords.x = 0.0f;
+	objectPtr->textureCoords.y = 1.0f;
+	objectPtr->textureIndex = textureIndex;
+	objectPtr++;
+
+	data.count++;
+}
 
 void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 	rendererData.shader = CreateShader(vertexShaderPath, fragmentShaderPath);
@@ -35,13 +89,13 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 	glGenBuffers(1, &rendererData.vertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, rendererData.vertexBuffer);
 
-	glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 10* sizeof(float), 0);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(1,4, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(2,2, GL_FLOAT,GL_FALSE, 10 * sizeof(float), (void*)(7 * sizeof(float)));
-  glEnableVertexAttribArray(2);
-	glVertexAttribPointer(3,1,GL_FLOAT, GL_FALSE, 10* sizeof(float), (void*)(9 * sizeof(float)));
+	glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, sizeof(vertex), 0);
+  glEnableVertexAttribArray(0);                  
+  glVertexAttribPointer(1,4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);                  
+  glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(7 * sizeof(float)));
+  glEnableVertexAttribArray(2);                  
+	glVertexAttribPointer(3,1, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(9 * sizeof(float)));
 	glEnableVertexAttribArray(3);
 
 	glGenBuffers(1, &rendererData.indexBuffer);
@@ -53,65 +107,30 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 		samplers[i] = i;
 	}
 	glUniform1iv(location, 32, samplers);
-}
 
-void data(){
-	float vertices[] = {
-    -1.5f, -0.5f, 0.0f,	 1.0f, 0.0f, 0.0f, 1.0f,  0.0f, 0.0f,	0.0f, 
-    -0.5f, -0.5f, 0.0f,	 1.0f, 0.0f, 0.0f, 1.0f,  1.0f, 0.0f,	0.0f,
-    -0.5f,  0.5f, 0.0f,	 1.0f, 0.0f, 0.0f, 1.0f,  1.0f, 1.0f,	0.0f,
-    -1.5f,  0.5f, 0.0f,	 1.0f, 0.0f, 0.0f, 1.0f,  0.0f, 1.0f,	0.0f,
-
-     0.5f, -0.5f, 0.0f,	 0.0f, 1.0f, 0.0f, 1.0f,  0.0f, 0.0f ,1.0f, 
-     1.5f, -0.5f, 0.0f,	 0.0f, 1.0f, 0.0f, 1.0f,  1.0f, 0.0f ,1.0f,
-     1.5f,  0.5f, 0.0f,	 0.0f, 1.0f, 0.0f, 1.0f,  1.0f, 1.0f ,1.0f,
-     0.5f,  0.5f, 0.0f,	 0.0f, 1.0f, 0.0f, 1.0f,  0.0f, 1.0f ,1.0f
-  };
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 1000 * sizeof(vertex), NULL , GL_DYNAMIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	texture = LoadTexture("./assets/textures/tex.png");
 	texture2 = LoadTexture("./assets/textures/tex2.png");
-}
 
-int createQuad(vec2 transform, vec2 size, vec4 colour, const char* texturePath){
-	//unsigned int texture = LoadTexture(texturePath);
-
-	//vertex quad[4];
-
-	//for(int i = 0; i < 4; i++){
-	//	quad[i].colour = colour;
-	//}
-
-	//quad[0].position.x = transform.x;
-	//quad[0].position.y = transform.y;
-	//quad[0].position.z = 0.0f;
-	//quad[0].textureCoords = {0.0f, 0.0f};
-
-	//quad[1].position.x = transform.x + size.x;
-	//quad[1].position.y = transform.y;
-	//quad[1].position.z = 0.0f;
-	//quad[1].textureCoords = {1.0f, 0.0f};
-
-	//quad[2].position.x = transform.x + size.x;
-	//quad[2].position.y = transform.y + size.y;
-	//quad[2].position.z = 0.0f;
-	//quad[2].textureCoords = {1.0f, 1.0f};
-
-	//quad[3].position.x = transform.x;
-	//quad[3].position.y = transform.y + size.y;
-	//quad[3].position.z = 0.0f;
-	//quad[3].textureCoords = {0.0f, 1.0f};
+	createQuad(-1.5f, -0.5f, 0.0f);
+	createQuad(0.5f, -0.5f, 1.0f);
 }
 
 void draw(){
+
+	glBindBuffer(GL_ARRAY_BUFFER, rendererData.vertexBuffer);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(data.vertices), data.vertices);
+	
+
 	glClear(GL_COLOR_BUFFER_BIT);
 	glUseProgram(rendererData.shader);
 	glBindVertexArray(rendererData.vertexArray);
 
 	glBindTextureUnit(0,texture);
 	glBindTextureUnit(1,texture2);
+
 
 	glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 }
