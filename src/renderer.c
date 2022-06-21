@@ -1,6 +1,8 @@
 #include <renderer.h>
 
-#define MAX_VERTICES 128
+const unsigned int maxQuadCount = 1000;
+const unsigned int maxVertexCount = 4 * maxQuadCount;
+const unsigned int maxIndexCount = 6 * maxQuadCount;
 
 typedef struct {
 	vec3 position;
@@ -9,13 +11,13 @@ typedef struct {
 	float textureIndex;
 } vertex;
 
-unsigned int indices[] = {
-	0, 1, 2,
-	2, 3, 0,
-
-	4, 5, 6,
-	6, 7, 4
-};
+//unsigned int indices[] = {
+//	0, 1, 2,
+//	2, 3, 0,
+//
+//	4, 5, 6,
+//	6, 7, 4
+//};
 
 struct {
 	unsigned int vertexArray;
@@ -108,7 +110,21 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 	}
 	glUniform1iv(location, 32, samplers);
 
-	glBufferData(GL_ARRAY_BUFFER, 1000 * sizeof(vertex), NULL , GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, maxVertexCount * sizeof(vertex), NULL , GL_DYNAMIC_DRAW);
+
+	unsigned int indices[maxIndexCount];
+	unsigned int offset = 0;
+	for(unsigned int i = 0; i < maxIndexCount; i+=6){
+		indices[i + 0] = 0 + offset;
+		indices[i + 1] = 1 + offset;
+		indices[i + 2] = 2 + offset;
+
+		indices[i + 3] = 2 + offset;
+		indices[i + 4] = 3 + offset;
+		indices[i + 5] = 0 + offset;
+		offset += 4;
+	}
+
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	texture = LoadTexture("./assets/textures/tex.png");
