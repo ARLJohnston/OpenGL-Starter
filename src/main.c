@@ -18,6 +18,11 @@ void processInput(GLFWwindow *window)
 	updateCamera(window);
 }
 
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
+{
+	updateZoom(window, xoffset, yoffset);
+}
+
 int main(void){
 	glfwInit();
 

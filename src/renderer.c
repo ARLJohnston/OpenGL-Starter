@@ -20,6 +20,7 @@ struct {
 
 struct {
 	float vertices[200];
+	unsigned int textures[32];
 	unsigned int count;
 } data;
 
@@ -119,8 +120,19 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	texture = LoadTexture("./assets/textures/tex.png");
-	texture2 = LoadTexture("./assets/textures/tex2.png");
+	unsigned int whiteTexture;
+	glCreateTextures(GL_TEXTURE_2D, 1, &whiteTexture);
+	glBindTexture(GL_TEXTURE_2D, whiteTexture);
+	unsigned int white = 0xffffffff;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &white);
+	data.textures[0] = whiteTexture;
+
+	for(unsigned int i = 1; i < 32; i++){
+		data.textures[i] = 0;
+	}
+
+	data.textures[1] = LoadTexture("./assets/textures/tex.png");
+	//data.textures[0] = LoadTexture("./assets/textures/tex2.png");
 
 	createQuad(-1.5f, -0.5f, 0.0f);
 	createQuad(0.5f, -0.5f, 1.0f);
@@ -136,8 +148,12 @@ void draw(){
 	glUseProgram(rendererData.shader);
 	glBindVertexArray(rendererData.vertexArray);
 
-	glBindTextureUnit(0,texture);
-	glBindTextureUnit(1,texture2);
+	//glBindTextureUnit(0,texture);
+	//glBindTextureUnit(1,texture2);
+	glBindTextures(0,2,&data.textures);
+	//for(unsigned int i = 0; i < 32; i++){
+	//	glBindTextureUnit(i, data.textures[i]);
+	//}
 
 
 	glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
@@ -149,27 +165,28 @@ void terminate(){
 	glDeleteBuffers(1, &rendererData.indexBuffer);
 }
 
-static float zoom =1.0f;
+static float zoom = -1.0f;
 static float x = 1.0f;
 static float y = 1.0f;
 
 void updateCamera(GLFWwindow *window){
 	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		y += 0.05f;
+		y -= 0.05f;
 	}
 	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		y -= 0.05f;
+		y += 0.05f;
 	}
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		x += 0.05f;
+		x -= 0.05f;
 	}
 	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		x -= 0.05f;
+		x += 0.05f;
 	}
+
 	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, 0.0f, 10.0f);
 	setViewMatrix(x, y);
 
@@ -177,3 +194,16 @@ void updateCamera(GLFWwindow *window){
 	glUniformMatrix4fv(glGetUniformLocation(rendererData.shader, "view"), 1, GL_FALSE, getViewMatrix());
 }
 
+void updateZoom(GLFWwindow *window,double xoffset, double yoffset){
+	if(yoffset < 0)
+	{
+		zoom += 0.05f;
+	} else {
+		zoom -= 0.05f;
+	}
+
+	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, 0.0f, 10.0f);
+
+	glUniformMatrix4fv(glGetUniformLocation(rendererData.shader, "projection"), 1, GL_FALSE, getOrthoMatrix());
+
+}

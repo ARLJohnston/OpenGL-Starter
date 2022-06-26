@@ -13,5 +13,6 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath);
 void draw();
 void terminate(); 
 void updateCamera(GLFWwindow *window);
+void updateZoom(GLFWwindow *window,double xoffset, double yoffset);
 
 #endif
