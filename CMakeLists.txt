@@ -32,6 +32,8 @@ set(SOURCES
 	src/texture.c
 	src/vector.c
 	src/renderer.c
+	src/orthographicCamera.c
+	src/viewMatrix.c
 	include/stb_image.h
 )
 

@@ -15,6 +15,7 @@ void processInput(GLFWwindow *window)
 	{
 		glfwSetWindowShouldClose(window, true);
 	}
+	updateCamera(window);
 }
 
 int main(void){

@@ -11,14 +11,6 @@ typedef struct {
 	float textureIndex;
 } vertex;
 
-//unsigned int indices[] = {
-//	0, 1, 2,
-//	2, 3, 0,
-//
-//	4, 5, 6,
-//	6, 7, 4
-//};
-
 struct {
 	unsigned int vertexArray;
 	unsigned int vertexBuffer;
@@ -156,3 +148,32 @@ void terminate(){
 	glDeleteBuffers(1, &rendererData.vertexBuffer);
 	glDeleteBuffers(1, &rendererData.indexBuffer);
 }
+
+static float zoom =1.0f;
+static float x = 1.0f;
+static float y = 1.0f;
+
+void updateCamera(GLFWwindow *window){
+	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		y += 0.05f;
+	}
+	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		y -= 0.05f;
+	}
+	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		x += 0.05f;
+	}
+	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		x -= 0.05f;
+	}
+	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, 0.0f, 10.0f);
+	setViewMatrix(x, y);
+
+	glUniformMatrix4fv(glGetUniformLocation(rendererData.shader, "projection"), 1, GL_FALSE, getOrthoMatrix());
+	glUniformMatrix4fv(glGetUniformLocation(rendererData.shader, "view"), 1, GL_FALSE, getViewMatrix());
+}
+
