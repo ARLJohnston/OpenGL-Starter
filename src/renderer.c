@@ -3,6 +3,7 @@
 const unsigned int maxQuadCount = 1000;
 const unsigned int maxVertexCount = 4 * maxQuadCount;
 const unsigned int maxIndexCount = 6 * maxQuadCount;
+unsigned int slots;
 
 typedef struct {
 	vec3 position;
@@ -20,12 +21,9 @@ struct {
 
 struct {
 	float vertices[200];
-	unsigned int textures[32];
+	unsigned int* textures; 
 	unsigned int count;
 } data;
-
-unsigned int texture;
-unsigned int texture2;
 
 void createQuad(float x, float y, float textureIndex){
 
@@ -96,12 +94,17 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 	glGenBuffers(1, &rendererData.indexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererData.indexBuffer);
 
+
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &slots);
+	data.textures =	(unsigned int*)malloc(slots*sizeof(unsigned int));
+
 	unsigned int location=glGetUniformLocation(rendererData.shader,"u_Texture");
-	int samplers[32];
-	for(int i = 0; i < 32; i++){
+	int *samplers = (int*)malloc(slots*sizeof(int));
+	for(int i = 0; i < slots; i++){
 		samplers[i] = i;
 	}
-	glUniform1iv(location, 32, samplers);
+	glUniform1iv(location, slots, samplers);
+	free(samplers);
 
 	glBufferData(GL_ARRAY_BUFFER, maxVertexCount * sizeof(vertex), NULL , GL_DYNAMIC_DRAW);
 
@@ -132,7 +135,6 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 	}
 
 	data.textures[1] = LoadTexture("./assets/textures/tex.png");
-	//data.textures[0] = LoadTexture("./assets/textures/tex2.png");
 
 	createQuad(-1.5f, -0.5f, 0.0f);
 	createQuad(0.5f, -0.5f, 1.0f);
@@ -143,18 +145,11 @@ void draw(){
 	glBindBuffer(GL_ARRAY_BUFFER, rendererData.vertexBuffer);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(data.vertices), data.vertices);
 	
-
 	glClear(GL_COLOR_BUFFER_BIT);
 	glUseProgram(rendererData.shader);
 	glBindVertexArray(rendererData.vertexArray);
 
-	//glBindTextureUnit(0,texture);
-	//glBindTextureUnit(1,texture2);
-	glBindTextures(0,2,&data.textures);
-	//for(unsigned int i = 0; i < 32; i++){
-	//	glBindTextureUnit(i, data.textures[i]);
-	//}
-
+	glBindTextures(0,2,data.textures);
 
 	glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 }
