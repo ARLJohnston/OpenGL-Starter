@@ -97,6 +97,7 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &slots);
 	data.textures =	(unsigned int*)malloc(slots*sizeof(unsigned int));
+	//glUniform1i(glGetUniformLocation(rendererData.shader, "slots"), slots);
 
 	unsigned int location=glGetUniformLocation(rendererData.shader,"u_Texture");
 	int *samplers = (int*)malloc(slots*sizeof(int));
