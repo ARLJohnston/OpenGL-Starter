@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <renderer.h>
+#include <vector.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -50,18 +51,38 @@ int main(void){
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	rendererInit("assets/shaders/vert.glsl", "assets/shaders/frag.glsl");
+	renderer_init();
+	renderer_shader_init("assets/shaders/vert.glsl", "assets/shaders/frag.glsl");
+	//rendererInit("assets/shaders/vert.glsl", "assets/shaders/frag.glsl");
+
+
+	LoadTexture("./assets/textures/tex.png");
+
+	vec2 quad0Pos = {-1.5f,-0.5f};
+	vec2 quad1Pos = {0.5f,-0.5f};
+
+	vec2 quadSize = {1.0f, 1.0f};
+	vec4 quadColour = {1.0f, 0.0f, 0.0f, 1.0f};
+
 
 	while(!glfwWindowShouldClose(window))
 	{
-		draw();
+		renderer_begin_batch();
+
+		renderer_draw_quad_colour(quad0Pos, quadSize, quadColour);
+		//renderer_draw_quad_texture(quad1Pos, quadSize, 1);
+
+		renderer_end_batch();
+		renderer_flush();
+		//glClear(GL_COLOR_BUFFER_BIT);
 
 		processInput(window);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-	}
-
-
+	}    
+     //
+     //
+	renderer_terminate();
 	glfwTerminate();
 	return 0;
 }

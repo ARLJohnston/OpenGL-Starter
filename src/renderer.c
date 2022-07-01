@@ -1,9 +1,11 @@
 #include <renderer.h>
+#include <stdio.h>
 
 const unsigned int maxQuadCount = 1000;
 const unsigned int maxVertexCount = 4 * maxQuadCount;
 const unsigned int maxIndexCount = 6 * maxQuadCount;
 unsigned int slots;
+void* draw;
 
 typedef struct {
 	vec3 position;
@@ -23,18 +25,24 @@ struct {
 	float vertices[200];
 	unsigned int* textures; 
 	unsigned int count;
+	unsigned int indexCount;
+	unsigned int textureCount;
+	unsigned int endPtr;
 } data;
 
-void createQuad(float x, float y, float textureIndex){
+void drawQuad(vec2 position, vec2 size, vec4 colour, float textureIndex){
+	if(data.indexCount >= maxIndexCount || data.textureCount >= slots){
+		renderer_end_batch();
+		renderer_flush();
+		renderer_begin_batch();
+	}
 
-	float size = 1.0f;
 
 	vertex* objectPtr = (void*) &data.vertices + (data.count * 4 * sizeof(vertex));
 
-	vec4 colour = {1.0f, 0.0f, 0.0f, 1.0f};
 
-	objectPtr->position.x = x;
-	objectPtr->position.y = y;
+	objectPtr->position.x = position.x;
+	objectPtr->position.y = position.y;
 	objectPtr->position.z = 0.0f;
 	objectPtr->colour = colour;
 	objectPtr->textureCoords.x = 0.0f;
@@ -42,8 +50,8 @@ void createQuad(float x, float y, float textureIndex){
 	objectPtr->textureIndex = textureIndex;
 	objectPtr++;
 
-	objectPtr->position.x = x + size;
-	objectPtr->position.y = y;
+	objectPtr->position.x = position.x + size.x;
+	objectPtr->position.y = position.y;
 	objectPtr->position.z = 0.0f;
 	objectPtr->colour = colour;
 	objectPtr->textureCoords.x = 1.0f;
@@ -51,8 +59,8 @@ void createQuad(float x, float y, float textureIndex){
 	objectPtr->textureIndex = textureIndex;
 	objectPtr++;
 
-	objectPtr->position.x = x + size;
-	objectPtr->position.y = y + size;
+	objectPtr->position.x = position.x + size.x;
+	objectPtr->position.y = position.y + size.y;
 	objectPtr->position.z = 0.0f;
 	objectPtr->colour = colour;
 	objectPtr->textureCoords.x = 1.0f;
@@ -60,21 +68,24 @@ void createQuad(float x, float y, float textureIndex){
 	objectPtr->textureIndex = textureIndex;
 	objectPtr++;
 
-	objectPtr->position.x = x;
-	objectPtr->position.y = y + size;
+	objectPtr->position.x = position.x;
+	objectPtr->position.y = position.y + size.y;
 	objectPtr->position.z = 0.0f;
 	objectPtr->colour = colour;
 	objectPtr->textureCoords.x = 0.0f;
 	objectPtr->textureCoords.y = 1.0f;
 	objectPtr->textureIndex = textureIndex;
 	objectPtr++;
+
+	data.endPtr = objectPtr;
 
 	data.count++;
+	data.indexCount += 6;
 }
-
-void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
-	rendererData.shader = CreateShader(vertexShaderPath, fragmentShaderPath);
-	glUseProgram(rendererData.shader);
+void renderer_init(){
+	data.count = 0;
+	data.indexCount = 0;
+	data.textureCount = 1;
 
 	glCreateVertexArrays(1, &rendererData.vertexArray);
 	glBindVertexArray(rendererData.vertexArray);
@@ -94,10 +105,8 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 	glGenBuffers(1, &rendererData.indexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererData.indexBuffer);
 
-
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &slots);
 	data.textures =	(unsigned int*)malloc(slots*sizeof(unsigned int));
-	//glUniform1i(glGetUniformLocation(rendererData.shader, "slots"), slots);
 
 	unsigned int location=glGetUniformLocation(rendererData.shader,"u_Texture");
 	int *samplers = (int*)malloc(slots*sizeof(int));
@@ -134,31 +143,45 @@ void rendererInit(const char* vertexShaderPath, const char* fragmentShaderPath){
 	for(unsigned int i = 1; i < 32; i++){
 		data.textures[i] = 0;
 	}
-
-	data.textures[1] = LoadTexture("./assets/textures/tex.png");
-
-	createQuad(-1.5f, -0.5f, 0.0f);
-	createQuad(0.5f, -0.5f, 1.0f);
 }
 
-void draw(){
-
-	glBindBuffer(GL_ARRAY_BUFFER, rendererData.vertexBuffer);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(data.vertices), data.vertices);
-	
-	glClear(GL_COLOR_BUFFER_BIT);
+void renderer_shader_init(const char* vertexShaderPath, const char* fragmentShaderPath){
+	rendererData.shader = CreateShader(vertexShaderPath, fragmentShaderPath);
 	glUseProgram(rendererData.shader);
-	glBindVertexArray(rendererData.vertexArray);
-
-	glBindTextures(0,2,data.textures);
-
-	glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 }
 
-void terminate(){
+void renderer_terminate(){
 	glDeleteVertexArrays(1, &rendererData.vertexArray);
 	glDeleteBuffers(1, &rendererData.vertexBuffer);
 	glDeleteBuffers(1, &rendererData.indexBuffer);
+}
+
+void renderer_draw_quad_colour(vec2 position, vec2 size, vec4 colour){
+	drawQuad(position, size, colour, 0.0f);
+}
+
+void renderer_draw_quad_texture(vec2 position, vec2 size, float textureindex){
+	vec4 colour = {1.0f, 1.0f, 1.0f, 1.0f};
+	drawQuad(position, size, colour, textureindex);
+}
+
+void renderer_begin_batch(){
+	draw = &data.vertices;
+}
+
+void renderer_end_batch(){
+
+	glBindBuffer(GL_ARRAY_BUFFER, rendererData.vertexBuffer);
+
+	glBufferSubData(GL_ARRAY_BUFFER, 0,data.count * 4 * sizeof(vertex) ,data.vertices);
+}
+
+void renderer_flush(){
+	glBindTextures(0, data.textureCount, data.textures);
+	glDrawElements(GL_TRIANGLES, data.indexCount, GL_UNSIGNED_INT, 0);
+	data.count = 0;
+	data.textureCount = 1;
+	data.indexCount = 0;
 }
 
 static float zoom = -1.0f;
