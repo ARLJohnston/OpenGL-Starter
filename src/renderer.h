@@ -20,7 +20,8 @@ void renderer_begin_batch();
 void renderer_end_batch();
 void renderer_flush();
 void renderer_draw_quad_colour(vec2 position, vec2 size, vec4 colour);
-void renderer_draw_quad_texture(vec2 position, vec2 size, float textureindex);
+void renderer_draw_quad_texture(vec2 position, vec2 size, unsigned int textureID);
+void renderer_add_texture(GLuint texture);
 
 
 #endif
