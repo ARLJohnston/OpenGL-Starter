@@ -171,6 +171,9 @@ void renderer_init(){
 	glGenBuffers(1, &rendererData.indexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererData.indexBuffer);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &slots);
 	data.textures =	(unsigned int*)malloc(slots*sizeof(unsigned int));
 
@@ -206,11 +209,8 @@ void renderer_init(){
 	unsigned int white = 0xffffffff;
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &white);
 	data.textures[0] = whiteTexture;
-	tex0 = whiteTexture;
 
-	tex1 = LoadTexture("./assets/textures/tex.png");
-
-	for(unsigned int i = 0; i < 32; i++){
+	for(unsigned int i = 1; i < slots; i++){
 		data.textures[i] = 0;
 	}
 
@@ -248,9 +248,7 @@ void renderer_flush(){
 
 	glUseProgram(rendererData.shader);
 	glBindVertexArray(rendererData.vertexArray);
-	//glBindTextures(0, data.textureCount+1, data.textures);
-	glBindTextureUnit(0, tex0);
-	glBindTextureUnit(1, tex1);
+	glBindTextures(0, data.textureCount, data.textures);
 	glDrawElements(GL_TRIANGLES, data.indexCount, GL_UNSIGNED_INT, 0);
 	data.count = 0;
 	data.textureCount = 1;
@@ -279,7 +277,16 @@ void updateCamera(GLFWwindow *window){
 		x += 0.05f;
 	}
 
-	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, 0.0f, 10.0f);
+	if(glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
+	{
+		zoom+= 0.05f;
+	}
+	if(glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
+	{
+		zoom-= 0.05f;
+	}
+
+	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, -1.0f, 10.0f);
 	setViewMatrix(x, y);
 
 	glUniformMatrix4fv(glGetUniformLocation(rendererData.shader, "projection"), 1, GL_FALSE, getOrthoMatrix());

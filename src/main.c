@@ -53,8 +53,6 @@ int main(void){
 
 	renderer_shader_init("assets/shaders/vert.glsl", "assets/shaders/frag.glsl");
 	renderer_init();
-	//rendererInit("assets/shaders/vert.glsl", "assets/shaders/frag.glsl");
-
 
 	unsigned int tex = LoadTexture("./assets/textures/tex.png");
 	renderer_add_texture(tex);
@@ -64,8 +62,6 @@ int main(void){
 
 	vec2 quadSize = {1.0f, 1.0f};
 	vec4 quadColour = {1.0f, 0.0f, 0.0f, 1.0f};
-
-
 
 	while(!glfwWindowShouldClose(window))
 	{
