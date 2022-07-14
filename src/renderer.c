@@ -32,6 +32,10 @@ struct {
 	unsigned int endPtr;
 } data;
 
+unsigned int getShader(){
+	return rendererData.shader;
+}
+
 void renderer_draw_quad_texture(vec2 position, vec2 size, unsigned int textureID){
 	if(data.indexCount >= maxIndexCount || data.textureCount >= slots){
 		renderer_end_batch();
@@ -253,56 +257,4 @@ void renderer_flush(){
 	data.count = 0;
 	data.textureCount = 1;
 	data.indexCount = 0;
-}
-
-static float zoom = -1.0f;
-static float x = 1.0f;
-static float y = 1.0f;
-
-void updateCamera(GLFWwindow *window){
-	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-	{
-		y -= 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-	{
-		y += 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-	{
-		x -= 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-	{
-		x += 0.05f;
-	}
-
-	if(glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
-	{
-		zoom+= 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
-	{
-		zoom-= 0.05f;
-	}
-
-	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, -1.0f, 10.0f);
-	setViewMatrix(x, y);
-
-	glUniformMatrix4fv(glGetUniformLocation(rendererData.shader, "projection"), 1, GL_FALSE, getOrthoMatrix());
-	glUniformMatrix4fv(glGetUniformLocation(rendererData.shader, "view"), 1, GL_FALSE, getViewMatrix());
-}
-
-void updateZoom(GLFWwindow *window,double xoffset, double yoffset){
-	if(yoffset < 0)
-	{
-		zoom += 0.05f;
-	} else {
-		zoom -= 0.05f;
-	}
-
-	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, 0.0f, 10.0f);
-
-	glUniformMatrix4fv(glGetUniformLocation(rendererData.shader, "projection"), 1, GL_FALSE, getOrthoMatrix());
-
 }

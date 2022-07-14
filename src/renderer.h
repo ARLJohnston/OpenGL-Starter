@@ -10,8 +10,7 @@
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
 
-void updateCamera(GLFWwindow *window);
-void updateZoom(GLFWwindow *window,double xoffset, double yoffset);
+unsigned int getShader();
 
 void renderer_init();
 void renderer_shader_init(const char* vertexShaderPath, const char* fragmentShaderPath);
