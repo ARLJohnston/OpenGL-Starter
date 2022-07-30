@@ -11,8 +11,8 @@ GLuint LoadTexture(const char* path)
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	//Filtering
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	//Wrapping
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -33,6 +33,8 @@ GLuint LoadTexture(const char* path)
 		printf("%s\n", path);
 		printf("%s\n", stbi_failure_reason());
 	}
+
+	stbi_image_free(data);
 	
 	return texture;
 }

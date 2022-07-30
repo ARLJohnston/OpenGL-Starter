@@ -1,13 +1,5 @@
 #include <renderer.h>
-#include <texture.h>
 #include <stdio.h>
-
-const unsigned int maxQuadCount = 1000;
-const unsigned int maxVertexCount = 4 * maxQuadCount;
-const unsigned int maxIndexCount = 6 * maxQuadCount;
-unsigned int slots;
-unsigned int tex0;
-unsigned int tex1;
 
 typedef struct {
 	vec3 position;
@@ -16,172 +8,225 @@ typedef struct {
 	float textureIndex;
 } vertex;
 
-struct {
-	unsigned int vertexArray;
-	unsigned int vertexBuffer;
-	unsigned int indexBuffer;
+struct Renderer {
+	uint32_t maxQuadsPerBatch;
+
+	unsigned int vao;
+	unsigned int vbo;
+	unsigned int ibo;
+
 	unsigned int shader;
-} rendererData;
 
-struct {
-	float vertices[200];
-	unsigned int* textures; 
-	unsigned int count;
-	unsigned int indexCount;
-	unsigned int textureCount;
-	unsigned int endPtr;
-} data;
+	vertex* buffer;
+	uint32_t quadCount;
 
-unsigned int getShader(){
-	return rendererData.shader;
+	uint32_t* textureSlots;
+	int textureCount;
+};
+
+static struct Renderer renderer;
+static uint32_t shader;
+static uint32_t slots;
+
+struct Renderer* rendererInit(int maxQuadsPerBatch){
+	struct Renderer *irenderer = &renderer;
+	irenderer->maxQuadsPerBatch = maxQuadsPerBatch;
+	irenderer->quadCount = 0;
+
+	unsigned int vao;
+	glCreateVertexArrays(1, &vao);
+
+	glGenVertexArrays(1, &irenderer->vao);
+	glBindVertexArray(irenderer->vao);
+
+	glGenBuffers(1, &irenderer->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, irenderer->vbo);
+
+	glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, sizeof(vertex), 0);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(1,4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);                  
+  glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(7 * sizeof(float)));
+  glEnableVertexAttribArray(2);                  
+  glVertexAttribPointer(3,1, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(9 * sizeof(float)));
+  glEnableVertexAttribArray(3);
+
+	glGenBuffers(1, &irenderer->ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, irenderer->ibo);
+
+	irenderer->buffer = malloc(sizeof(vertex) * 4 * maxQuadsPerBatch);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * 4 * maxQuadsPerBatch, NULL, GL_DYNAMIC_DRAW);
+
+	uint32_t* indexBuffer = malloc(sizeof(uint32_t) * 6 * maxQuadsPerBatch);
+	unsigned int offset = 0;
+	for(int i = 0; i < 6 * maxQuadsPerBatch; i += 6){
+		indexBuffer[i + 0] = 0 + offset;
+		indexBuffer[i + 1] = 1 + offset;
+		indexBuffer[i + 2] = 2 + offset;
+
+		indexBuffer[i + 3] = 2 + offset;
+		indexBuffer[i + 4] = 3 + offset;
+		indexBuffer[i + 5] = 0 + offset;
+
+		offset += 4;
+	}
+
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * 6 * maxQuadsPerBatch, indexBuffer, GL_STATIC_DRAW);
+	free(indexBuffer);
+
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &slots);
+	irenderer->textureSlots = malloc(sizeof(uint32_t) * slots);
+
+
+	unsigned int whiteTexture;
+	glCreateTextures(GL_TEXTURE_2D, 1, &whiteTexture);
+	glBindTexture(GL_TEXTURE_2D, whiteTexture);
+	unsigned int white = 0xffffffff;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &white);
+	irenderer->textureSlots[0] = whiteTexture;
+	irenderer->textureCount++;
+
+	for (unsigned int i = 1; i < slots; i++) {
+		irenderer->textureSlots[i] = 0;
+	}
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+	return irenderer;
 }
 
-void renderer_draw_quad_texture(vec2 position, vec2 size, unsigned int textureID){
-	if(data.indexCount >= maxIndexCount || data.textureCount >= slots){
-		renderer_end_batch();
-		renderer_flush();
-		renderer_begin_batch();
+void rendererDrawQuadColour(struct Renderer *renderer, vec2 position, vec2 size, vec4 colour){
+	int offset = renderer->quadCount * 4;
+	float textureIndex = 0;
+
+	unsigned int i = 0;
+
+	renderer->buffer[offset + i].position.x = position.x;
+	renderer->buffer[offset + i].position.y = position.y;
+	renderer->buffer[offset + i].position.z = 0.0f;
+	renderer->buffer[offset + i].colour = colour;
+	renderer->buffer[offset + i].textureCoords.x = 0.0f;
+	renderer->buffer[offset + i].textureCoords.y = 0.0f;
+	renderer->buffer[offset + i].textureIndex = textureIndex;
+	i++;
+
+	renderer->buffer[offset + i].position.x = position.x + size.x;
+	renderer->buffer[offset + i].position.y = position.y;
+	renderer->buffer[offset + i].position.z = 0.0f;
+	renderer->buffer[offset + i].colour = colour;
+	renderer->buffer[offset + i].textureCoords.x = 1.0f;
+	renderer->buffer[offset + i].textureCoords.y = 0.0f;
+	renderer->buffer[offset + i].textureIndex = textureIndex;
+	i++;
+
+	renderer->buffer[offset + i].position.x = position.x + size.x;
+	renderer->buffer[offset + i].position.y = position.y + size.y;
+	renderer->buffer[offset + i].position.z = 0.0f;
+	renderer->buffer[offset + i].colour = colour;
+	renderer->buffer[offset + i].textureCoords.x = 1.0f;
+	renderer->buffer[offset + i].textureCoords.y = 1.0f;
+	renderer->buffer[offset + i].textureIndex = textureIndex;
+	i++;
+
+	renderer->buffer[offset + i].position.x = position.x;
+	renderer->buffer[offset + i].position.y = position.y + size.y;
+	renderer->buffer[offset + i].position.z = 0.0f;
+	renderer->buffer[offset + i].colour = colour;
+	renderer->buffer[offset + i].textureCoords.x = 0.0f;
+	renderer->buffer[offset + i].textureCoords.y = 1.0f;
+	renderer->buffer[offset + i].textureIndex = textureIndex;
+
+	renderer->quadCount++;
+	if(renderer->quadCount >= renderer->maxQuadsPerBatch){
+		rendererFlush(renderer);
+	}
+}
+
+void rendererDrawQuadTexture(struct Renderer *renderer, vec2 position, vec2 size, unsigned int textureID){
+	int offset = renderer->quadCount * 4;
+	vec4 colour = {1.0f, 1.0f, 1.0f, 1.0f };
+
+	if(renderer->textureCount >= slots || renderer->quadCount >= renderer->maxQuadsPerBatch){
+		rendererFlush(renderer);
 	}
 
 	float textureIndex = 0.0f;
 	for(unsigned int i = 1; i < slots; i++){
-		if(data.textures[i] == textureID){
+		if (renderer->textureSlots[i] == textureID) {
 			textureIndex = (float)i;
 			break;
 		}
 	}
 
-	vec4 colour = {1.0f, 1.0f, 1.0f, 1.0f};
-
-	vertex* objectPtr = (void*) &data.vertices + (data.count * 4 * sizeof(vertex));
-
-
-	objectPtr->position.x = position.x;
-	objectPtr->position.y = position.y;
-	objectPtr->position.z = 0.0f;
-	objectPtr->colour = colour;
-	objectPtr->textureCoords.x = 0.0f;
-	objectPtr->textureCoords.y = 0.0f;
-	objectPtr->textureIndex = textureIndex;
-	objectPtr++;
-
-	objectPtr->position.x = position.x + size.x;
-	objectPtr->position.y = position.y;
-	objectPtr->position.z = 0.0f;
-	objectPtr->colour = colour;
-	objectPtr->textureCoords.x = 1.0f;
-	objectPtr->textureCoords.y = 0.0f;
-	objectPtr->textureIndex = textureIndex;
-	objectPtr++;
-
-	objectPtr->position.x = position.x + size.x;
-	objectPtr->position.y = position.y + size.y;
-	objectPtr->position.z = 0.0f;
-	objectPtr->colour = colour;
-	objectPtr->textureCoords.x = 1.0f;
-	objectPtr->textureCoords.y = 1.0f;
-	objectPtr->textureIndex = textureIndex;
-	objectPtr++;
-
-	objectPtr->position.x = position.x;
-	objectPtr->position.y = position.y + size.y;
-	objectPtr->position.z = 0.0f;
-	objectPtr->colour = colour;
-	objectPtr->textureCoords.x = 0.0f;
-	objectPtr->textureCoords.y = 1.0f;
-	objectPtr->textureIndex = textureIndex;
-	objectPtr++;
-
-	data.endPtr = objectPtr;
-
-	data.count++;
-	data.indexCount += 6;
-}
-
-void renderer_draw_quad_colour(vec2 position, vec2 size, vec4 colour){
-	if(data.indexCount >= maxIndexCount){
-		renderer_end_batch();
-		renderer_flush();
-		renderer_begin_batch();
+	if(textureIndex == 0.0f){
+		textureIndex = (float)(renderer->textureCount);
+		renderer->textureSlots[renderer->textureCount] = textureID;
+		renderer->textureCount++;
 	}
 
-	float textureIndex = 0.0f;
+	int i = 0;
+	renderer->buffer[offset + i].position.x = position.x;
+	renderer->buffer[offset + i].position.y = position.y;
+	renderer->buffer[offset + i].position.z = 0.0f;
+	renderer->buffer[offset + i].colour = colour;
+	renderer->buffer[offset + i].textureCoords.x = 0.0f;
+	renderer->buffer[offset + i].textureCoords.y = 0.0f;
+	renderer->buffer[offset + i].textureIndex = textureIndex;
+	i++;
 
+	renderer->buffer[offset + i].position.x = position.x + size.x;
+	renderer->buffer[offset + i].position.y = position.y;
+	renderer->buffer[offset + i].position.z = 0.0f;
+	renderer->buffer[offset + i].colour = colour;
+	renderer->buffer[offset + i].textureCoords.x = 1.0f;
+	renderer->buffer[offset + i].textureCoords.y = 0.0f;
+	renderer->buffer[offset + i].textureIndex = textureIndex;
+	i++;
 
-	vertex* objectPtr = (void*) &data.vertices + (data.count * 4 * sizeof(vertex));
+	renderer->buffer[offset + i].position.x = position.x + size.x;
+	renderer->buffer[offset + i].position.y = position.y + size.y;
+	renderer->buffer[offset + i].position.z = 0.0f;
+	renderer->buffer[offset + i].colour = colour;
+	renderer->buffer[offset + i].textureCoords.x = 1.0f;
+	renderer->buffer[offset + i].textureCoords.y = 1.0f;
+	renderer->buffer[offset + i].textureIndex = textureIndex;
+	i++;
 
-
-	objectPtr->position.x = position.x;
-	objectPtr->position.y = position.y;
-	objectPtr->position.z = 0.0f;
-	objectPtr->colour = colour;
-	objectPtr->textureCoords.x = 0.0f;
-	objectPtr->textureCoords.y = 0.0f;
-	objectPtr->textureIndex = textureIndex;
-	objectPtr++;
-
-	objectPtr->position.x = position.x + size.x;
-	objectPtr->position.y = position.y;
-	objectPtr->position.z = 0.0f;
-	objectPtr->colour = colour;
-	objectPtr->textureCoords.x = 1.0f;
-	objectPtr->textureCoords.y = 0.0f;
-	objectPtr->textureIndex = textureIndex;
-	objectPtr++;
-
-	objectPtr->position.x = position.x + size.x;
-	objectPtr->position.y = position.y + size.y;
-	objectPtr->position.z = 0.0f;
-	objectPtr->colour = colour;
-	objectPtr->textureCoords.x = 1.0f;
-	objectPtr->textureCoords.y = 1.0f;
-	objectPtr->textureIndex = textureIndex;
-	objectPtr++;
-
-	objectPtr->position.x = position.x;
-	objectPtr->position.y = position.y + size.y;
-	objectPtr->position.z = 0.0f;
-	objectPtr->colour = colour;
-	objectPtr->textureCoords.x = 0.0f;
-	objectPtr->textureCoords.y = 1.0f;
-	objectPtr->textureIndex = textureIndex;
-	objectPtr++;
-
-	data.endPtr = objectPtr;
-
-	data.count++;
-	data.indexCount += 6;
+	renderer->buffer[offset + i].position.x = position.x;
+	renderer->buffer[offset + i].position.y = position.y + size.y;
+	renderer->buffer[offset + i].position.z = 0.0f;
+	renderer->buffer[offset + i].colour = colour;
+	renderer->buffer[offset + i].textureCoords.x = 0.0f;
+	renderer->buffer[offset + i].textureCoords.y = 1.0f;
+	renderer->buffer[offset + i].textureIndex = textureIndex;
+	
+	renderer->quadCount++;
 }
-void renderer_init(){
-	data.count = 0;
-	data.indexCount = 0;
-	data.textureCount = 1;
 
-	glCreateVertexArrays(1, &rendererData.vertexArray);
-	glBindVertexArray(rendererData.vertexArray);
+void rendererFlush(struct Renderer *renderer){
+	int bufferSize = sizeof(vertex) * 4 * renderer->quadCount;
+	int count = 6 * renderer->quadCount;
 
-	glGenBuffers(1, &rendererData.vertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, rendererData.vertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, renderer->vbo);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, bufferSize, renderer->buffer);
 
-	glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, sizeof(vertex), 0);
-  glEnableVertexAttribArray(0);                  
-  glVertexAttribPointer(1,4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);                  
-  glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(7 * sizeof(float)));
-  glEnableVertexAttribArray(2);                  
-	glVertexAttribPointer(3,1, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(9 * sizeof(float)));
-	glEnableVertexAttribArray(3);
+	glBindTextures(0, renderer->textureCount, renderer->textureSlots);
+	glBindVertexArray(renderer->vao);
+	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, NULL);
 
-	glGenBuffers(1, &rendererData.indexBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererData.indexBuffer);
+	renderer->quadCount = 0;
+	renderer->textureCount = 1;
+}
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+void rendererShaderInit(struct Renderer *renderer, const char* vertexShaderPath, const char* fragmentShaderPath){
+	shader = CreateShader(vertexShaderPath, fragmentShaderPath);
+	glUseProgram(shader);
+	renderer->shader = shader;
 
-	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &slots);
-	data.textures =	(unsigned int*)malloc(slots*sizeof(unsigned int));
-
-	unsigned int location=glGetUniformLocation(rendererData.shader,"u_Texture");
+	unsigned int location = glGetUniformLocation(renderer->shader, "u_Texture");
 	int *samplers = (int*)malloc(slots*sizeof(int));
 
 	for(int i = 0; i < slots; i++){
@@ -189,72 +234,66 @@ void renderer_init(){
 	}
 	glUniform1iv(location, slots, samplers);
 	free(samplers);
+}
 
-	glBufferData(GL_ARRAY_BUFFER, maxVertexCount * sizeof(vertex), NULL , GL_DYNAMIC_DRAW);
+void rendererClear(){
+		glClear(GL_COLOR_BUFFER_BIT);
+}
 
-	unsigned int indices[maxIndexCount];
-	unsigned int offset = 0;
-	for(unsigned int i = 0; i < maxIndexCount; i+=6){
-		indices[i + 0] = 0 + offset;
-		indices[i + 1] = 1 + offset;
-		indices[i + 2] = 2 + offset;
+void rendererTerminate(){
+	glDeleteVertexArrays(1, &renderer.vao);
+	glDeleteBuffers(1, &renderer.vbo);
+	glDeleteBuffers(1, &renderer.ibo);
+}
 
-		indices[i + 3] = 2 + offset;
-		indices[i + 4] = 3 + offset;
-		indices[i + 5] = 0 + offset;
-		offset += 4;
+static float zoom = -1.0f;
+static float x = 1.0f;
+static float y = 1.0f;
+
+void updateCamera(GLFWwindow *window){
+	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		y -= 0.05f;
+	}
+	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		y += 0.05f;
+	}
+	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		x -= 0.05f;
+	}
+	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		x += 0.05f;
 	}
 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	unsigned int whiteTexture;
-	glCreateTextures(GL_TEXTURE_2D, 1, &whiteTexture);
-	glBindTexture(GL_TEXTURE_2D, whiteTexture);
-	unsigned int white = 0xffffffff;
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &white);
-	data.textures[0] = whiteTexture;
-
-	for(unsigned int i = 1; i < slots; i++){
-		data.textures[i] = 0;
+	if(glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
+	{
+		zoom+= 0.05f;
+	}
+	if(glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
+	{
+		zoom-= 0.05f;
 	}
 
+	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, -1.0f, 10.0f);
+	setViewMatrix(x, y);
+
+	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, getOrthoMatrix());
+	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, getViewMatrix());
 }
 
-void renderer_shader_init(const char* vertexShaderPath, const char* fragmentShaderPath){
-	rendererData.shader = CreateShader(vertexShaderPath, fragmentShaderPath);
-	glUseProgram(rendererData.shader);
-}
+void updateZoom(GLFWwindow *window,double xoffset, double yoffset){
+	if(yoffset < 0)
+	{
+		zoom += 0.05f;
+	} else {
+		zoom -= 0.05f;
+	}
 
-void renderer_terminate(){
-	glDeleteVertexArrays(1, &rendererData.vertexArray);
-	glDeleteBuffers(1, &rendererData.vertexBuffer);
-	glDeleteBuffers(1, &rendererData.indexBuffer);
-}
+	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, 0.0f, 10.0f);
 
+	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, getOrthoMatrix());
 
-void renderer_begin_batch(){
-}
-
-void renderer_add_texture(GLuint texture){
-	data.textures[data.textureCount] = texture;
-	data.textureCount++;
-}
-
-void renderer_end_batch(){
-
-	glBindBuffer(GL_ARRAY_BUFFER, rendererData.vertexBuffer);
-
-	glBufferSubData(GL_ARRAY_BUFFER, 0,data.count * 4 * sizeof(vertex) ,data.vertices);
-}
-
-void renderer_flush(){
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glUseProgram(rendererData.shader);
-	glBindVertexArray(rendererData.vertexArray);
-	glBindTextures(0, data.textureCount, data.textures);
-	glDrawElements(GL_TRIANGLES, data.indexCount, GL_UNSIGNED_INT, 0);
-	data.count = 0;
-	data.textureCount = 1;
-	data.indexCount = 0;
 }

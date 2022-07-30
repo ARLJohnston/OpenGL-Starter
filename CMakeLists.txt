@@ -3,11 +3,11 @@ project(OpenGL C)
 set(CMAKE_BUILD_TYPE Debug)
 
 #Top-level flags to show all errors
-#if(MVSC)
-#	add_compile_options(/W3 /WX)
-#else()
-#	add_compile_options(-W -Wall -Werror)
-#endif()
+if(MVSC)
+	add_compile_options(/W3 /WX)
+else()
+	add_compile_options(-W -Wall -g)
+endif()
 
 #Libraries
 find_package(OpenGL REQUIRED)

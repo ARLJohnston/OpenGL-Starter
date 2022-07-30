@@ -2,25 +2,25 @@
 #define RENDERER
 
 #include <vector.h>
+#include <matrix.h>
+#include <orthographicCamera.h>
+#include <viewMatrix.h>
 #include <shader.h>
 #include <texture.h>
 #include <string.h>
-#include <orthographicCamera.h>
-#include <viewMatrix.h>
 #include <GLFW/glfw3.h>
+#include <glad/glad.h>
 #include <stdlib.h>
 
-unsigned int getShader();
+void updateZoom(GLFWwindow *window,double xoffset, double yoffset);
+void updateCamera(GLFWwindow *window);
 
-void renderer_init();
-void renderer_shader_init(const char* vertexShaderPath, const char* fragmentShaderPath);
-void renderer_terminate();
-void renderer_begin_batch();
-void renderer_end_batch();
-void renderer_flush();
-void renderer_draw_quad_colour(vec2 position, vec2 size, vec4 colour);
-void renderer_draw_quad_texture(vec2 position, vec2 size, unsigned int textureID);
-void renderer_add_texture(GLuint texture);
-
-
+struct Renderer;
+struct Renderer* rendererInit(int maxQuadsPerBatch);
+void rendererShaderInit(struct Renderer *renderer, const char* vertexShaderPath, const char* fragmentShaderPath);
+void rendererDrawQuadColour(struct Renderer *renderer, vec2 position, vec2 size, vec4 colour);
+void rendererDrawQuadTexture(struct Renderer *renderer, vec2 position, vec2 size, unsigned int textureID);
+void rendererFlush(struct Renderer* renderer);
+void rendererClear();
+void rendererTerminate();
 #endif

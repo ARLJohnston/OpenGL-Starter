@@ -1,19 +1,14 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 #include <renderer.h>
-#include <vector.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
-
-//Camera
-static float zoom = -1.0f;
-static float x = 1.0f;
-static float y = 1.0f;
 
 void processInput(GLFWwindow *window)
 {
@@ -21,47 +16,18 @@ void processInput(GLFWwindow *window)
 	{
 		glfwSetWindowShouldClose(window, true);
 	}
-	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-	{
-		y -= 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-	{
-		y += 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-	{
-		x -= 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-	{
-		x += 0.05f;
-	}
-
-	if(glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
-	{
-		zoom+= 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
-	{
-		zoom-= 0.05f;
-	}
-	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, -1.0f, 10.0f);
-	setViewMatrix(x, y);
-
-	glUniformMatrix4fv(glGetUniformLocation(getShader(), "projection"), 1, GL_FALSE, getOrthoMatrix());
-	glUniformMatrix4fv(glGetUniformLocation(getShader(), "view"), 1, GL_FALSE, getViewMatrix());
+	updateCamera(window);
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
-	if(yoffset < 0)
-	{
-		zoom += 0.05f;
-	} else {
-		zoom -= 0.05f;
-	}
-	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, 0.0f, 10.0f);
+	updateZoom(window, xoffset, yoffset);
+
+}
+
+void error_callback(int error, const char *description){
+	fprintf(stderr, "(%d) %s\n", error, description);
+	fflush(stderr);
 }
 
 int main(void){
@@ -90,12 +56,19 @@ int main(void){
 	glViewport(0, 0, width, height);
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetErrorCallback(error_callback);
 
-	renderer_shader_init("assets/shaders/vert.glsl", "assets/shaders/frag.glsl");
-	renderer_init();
+	struct Renderer *renderer = rendererInit(200);
+	rendererShaderInit(renderer, "assets/shaders/vert.glsl", "assets/shaders/frag.glsl");
 
-	unsigned int tex = LoadTexture("./assets/textures/tex.png");
-	renderer_add_texture(tex);
+
+	unsigned int texArr[30];
+
+	for(unsigned int i = 0; i < 30; i++){
+		char path[28];
+		sprintf(path, "%s%d%s", "./assets/textures/tex", i, ".png");
+		texArr[i] = LoadTexture(path);
+	}
 
 	vec2 quad0Pos = {-1.5f,-0.5f};
 	vec2 quad1Pos = {0.5f,-0.5f};
@@ -103,21 +76,47 @@ int main(void){
 	vec2 quadSize = {1.0f, 1.0f};
 	vec4 quadColour = {1.0f, 0.0f, 0.0f, 1.0f};
 
+	vec2 pos;
+	vec2 size = {0.25f, 0.25f};
+
 	while(!glfwWindowShouldClose(window))
 	{
-		renderer_begin_batch();
+		rendererClear();
 
-		renderer_draw_quad_colour(quad0Pos, quadSize, quadColour);
-		renderer_draw_quad_texture(quad1Pos, quadSize, tex);
+		size.x = 0.25f;
+		size.y = 0.25f;
+		for(float y = -10.0f; y < 10.0f; y += 0.25f){
+			for(float x = -10.0f; x < 10.0f; x += 0.25f){
+				pos.x = x;
+				pos.y = y;
+				vec4 colour = {(x + 10) / 20.0f, 0.2f, (y + 10) / 20.0f, 1.0f};
+				rendererDrawQuadColour(renderer, pos, size, colour);
+			}
+		}
 
-		renderer_end_batch();
-		renderer_flush();
+
+		size.x = 1.0f;
+		size.y = 1.0f;
+		int i = 0;
+		for(int y = 0; y < 6; y++){
+			for(int x = 0; x < 5; x++){
+				GLuint tex = texArr[i];
+				i++;
+				pos.x = x;
+				pos.y = y;
+
+				rendererDrawQuadTexture(renderer, pos, size, tex);
+			}
+		}
+
+		rendererFlush(renderer);
+
 
 		processInput(window);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}    
-	renderer_terminate();
+	rendererTerminate();
 	glfwTerminate();
 	return 0;
 }
