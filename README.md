@@ -1,7 +1,16 @@
 # OpenGL-Starter
 A base for OpenGL using C and CMake and working batch renderer that automatically polls number of texture slots to minimize draw calls. 
 
-Example in main.c draws 32 unique textures from assets/textures and 6400 coloured quads. 
+Example in main.c draws 32 unique textures from assets/textures and 6400 coloured quads.
+
+# To run
+First clone the repository  
+```git clone --recurse-submodules https://github.com/ARLJay/OpenGL-Starter.git```
+
+Then run a cmake command e.g.  
+```cmake -S . -B ./build && cd build```
+
+Note: the example program expects 32 textures (names tex(number).png) to be in assets/textures. If run without these textures they will all appear as black quads.
 
 # CMake:
 - Gets GLFW3 from computer, if it isn't found it is downloaded from the git repository
