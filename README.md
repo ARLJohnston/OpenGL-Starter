@@ -14,7 +14,7 @@ Note: the example program expects 32 textures (names tex(number).png) to be in a
 
 # CMake:
 - Gets GLFW3 from computer, if it isn't found it is downloaded from the git repository
-- GLAD is taken from source
+- GLAD is compiled from source (this is downloaded upon cloning the project)
 - stb_image is copied from source (dated 12/04/2022)
 
 # Note on including glad
