@@ -5,8 +5,11 @@ Example in main.c draws 32 unique textures from assets/textures and 6400 coloure
 
 # CMake:
 - Gets GLFW3 from computer, if it isn't found it is downloaded from the git repository
-- GLAD is included as recommended in  https://github.com/Dav1dde/glad/issues/186
+- GLAD is taken from source
 - stb_image is copied from source (dated 12/04/2022)
+
+# Note on including glad
+ - Glad can also be included (using a specific version) as reccommended in https://github.com/Dav1dde/glad/issues/186 (see [Previous Commit](https://github.com/ARLJay/OpenGL-Starter/tree/daae626bf5d8b17ada7a22e919aa9e723c829f9c) for an implementation of this approach)
 
 # Include Diagram
 (Arrow goes from included to file which includes)
