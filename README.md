@@ -2,9 +2,10 @@
 A base for OpenGL using C and CMake and working batch renderer that automatically polls number of texture slots to minimize draw calls. 
 
 Example in main.c draws 32 unique textures from assets/textures and 6400 coloured quads.
+To Use without a batch renderer, delete renderer.c, renderer.h and all includes of it.
 
 # To run
-First clone the repository  
+First clone the repository (This must be recursive to clone GLAD)
 ```git clone --recurse-submodules https://github.com/ARLJay/OpenGL-Starter.git```
 
 Then run a cmake command e.g.  
@@ -13,7 +14,7 @@ Then run a cmake command e.g.
 Note: the example program expects 32 textures (names tex(number).png) to be in assets/textures. If run without these textures they will all appear as black quads.
 
 # CMake:
-- Gets GLFW3 from computer, if it isn't found it is downloaded from the git repository
+- Gets GLFW3 from computer, if it isn't found it is downloaded from the git repository and notifies the user
 - GLAD is compiled from source (this is downloaded upon cloning the project)
 - stb_image is copied from source (dated 12/04/2022)
 
@@ -22,4 +23,4 @@ Note: the example program expects 32 textures (names tex(number).png) to be in a
 
 # Include Diagram
 (Arrow goes from included to file which includes)
-[![](https://mermaid.ink/img/pako:eNptkTFvwjAQhf9KdDNUcQIBMnQpjEzt5nSw7Cu22sTIOJQK8d97MU6Mqm7fe_eedbavIK1CqOHgxFFnb9umy7KcW-e1DZaRL6JFJ570-zBi3OPF9w6jLvhJC4UuypI77EiSIYOx-O-o-2jJzyi9HZMVPxv83gvvzCWethoTd7nm7eN0Q9J0sc3yx3r00rLRKNJ68TrluP-QGJxsPZ8_54FYQVgGzIkWgVZEyylYpeAmYEXEYn1ANpVYMbUi5gmrhEVC9sctYQb0gHRtRT92HQYNeI0tNlATKuE-G2i6G-X6oxIed8rQ-0H9Ib5OOAPRe_v600movetxDG2NoP9pY-r2CzH-ob4)](https://mermaid.live/edit#pako:eNptkTFvwjAQhf9KdDNUcQIBMnQpjEzt5nSw7Cu22sTIOJQK8d97MU6Mqm7fe_eedbavIK1CqOHgxFFnb9umy7KcW-e1DZaRL6JFJ570-zBi3OPF9w6jLvhJC4UuypI77EiSIYOx-O-o-2jJzyi9HZMVPxv83gvvzCWethoTd7nm7eN0Q9J0sc3yx3r00rLRKNJ68TrluP-QGJxsPZ8_54FYQVgGzIkWgVZEyylYpeAmYEXEYn1ANpVYMbUi5gmrhEVC9sctYQb0gHRtRT92HQYNeI0tNlATKuE-G2i6G-X6oxIed8rQ-0H9Ib5OOAPRe_v600movetxDG2NoP9pY-r2CzH-ob4)
+[![](https://mermaid.ink/img/pako:eNptkTFPwzAQhf9KdHOL4qRN2wwslJEJNpvBsg9iQeLKdUpR1f_OOXHigti-9-75dL67gLIaoYZ3Jw9N9rIXXZbl3Drf2MEy6kG26ORd8xpKjHs8-95h1AU_NlKji7LkDjuSZKjBWP3Xaiyt-QmVt1Oy4ieDX0_SO3OO3TZTYpRb3t5WdyRNF1-z_PZ59NKw0SjSePE75TR_SAQn2y6X9_lArCAsB8yJVgNtiNZzsErB3RwcqfpFLLYMyOZGrJg7RcwTVgmLhOyPW8ICaKm0Ck1XvISCAN9giwJqQi3dhwDRXSnXH7T0-KgN7RRq73pcgOy9ff7u1KTHzN5IOlkL9Zv8POL1B3EZpc8)](https://mermaid.live/edit#pako:eNptkTFPwzAQhf9KdHOL4qRN2wwslJEJNpvBsg9iQeLKdUpR1f_OOXHigti-9-75dL67gLIaoYZ3Jw9N9rIXXZbl3Drf2MEy6kG26ORd8xpKjHs8-95h1AU_NlKji7LkDjuSZKjBWP3Xaiyt-QmVt1Oy4ieDX0_SO3OO3TZTYpRb3t5WdyRNF1-z_PZ59NKw0SjSePE75TR_SAQn2y6X9_lArCAsB8yJVgNtiNZzsErB3RwcqfpFLLYMyOZGrJg7RcwTVgmLhOyPW8ICaKm0Ck1XvISCAN9giwJqQi3dhwDRXSnXH7T0-KgN7RRq73pcgOy9ff7u1KTHzN5IOlkL9Zv8POL1B3EZpc8)
