@@ -246,54 +246,7 @@ void rendererTerminate(){
 	glDeleteBuffers(1, &renderer.ibo);
 }
 
-static float zoom = -1.0f;
-static float x = 1.0f;
-static float y = 1.0f;
-
-void updateCamera(GLFWwindow *window){
-	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-	{
-		y -= 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-	{
-		y += 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-	{
-		x -= 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-	{
-		x += 0.05f;
-	}
-
-	if(glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
-	{
-		zoom+= 0.05f;
-	}
-	if(glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
-	{
-		zoom-= 0.05f;
-	}
-
-	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, -1.0f, 10.0f);
-	setViewMatrix(x, y);
-
-	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, getOrthoMatrix());
-	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, getViewMatrix());
-}
-
-void updateZoom(GLFWwindow *window,double xoffset, double yoffset){
-	if(yoffset < 0)
-	{
-		zoom += 0.05f;
-	} else {
-		zoom -= 0.05f;
-	}
-
-	setOrthoMatrix(-5.0*zoom, 5.0*zoom, -5.0*zoom, 5.0*zoom, 0.0f, 10.0f);
-
-	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, getOrthoMatrix());
-
+void setMat4(const char* varName, float* matrix){
+	int loc = glGetUniformLocation(shader, varName);
+	glUniformMatrix4fv(loc,1, GL_FALSE, matrix);
 }

@@ -12,8 +12,7 @@
 #include <glad/glad.h>
 #include <stdlib.h>
 
-void updateZoom(GLFWwindow *window,double xoffset, double yoffset);
-void updateCamera(GLFWwindow *window);
+void setMat4(const char* varName, float* matrix);
 
 struct Renderer;
 struct Renderer* rendererInit(int maxQuadsPerBatch);
